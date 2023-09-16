@@ -1,0 +1,50 @@
+﻿@using IdSys.OneSheet.Web.Models.AutomaticRules
+@using IdSys.OneSheet.BusinessLogic.Enums
+@using IdSys.OneSheet.Web.Extensions
+@model IdSys.OneSheet.Web.Models.AutomaticRules.AutomaticRuleActionModel
+
+@{
+    var parent = ViewData["parent"] as EditModel;
+    var type = (ActionType)ViewData["type"];
+}
+
+<tr>
+    @if (type == ActionType.UpdateDataRow)
+    {
+        <td class="valign-middle">
+            @Html.HiddenFor(x => x.Id)
+            @Html.DropDownListFor(x => x.SelectedField, parent.FieldTypes, new { @class = "form-control field-type-changed"})
+            @Html.ValidationMessageFor(x => x.SelectedField)
+        </td>
+        <td class="valign-middle">
+            @if (Model.IsMetaItem)
+            {
+                @Html.DropDownListFor(x => x.MetaItemId, parent.MetaItems[Model.SelectedField.GetValueOrDefault()], new { @class = "form-control"})
+                @Html.ValidationMessageFor(x => x.MetaItemId)
+            }
+            else
+            {
+                @Html.TextBoxFor(x => x.Format, new { @class = "form-control" })
+                @Html.ValidationMessageFor(x => x.Format)
+            }
+        </td>
+    }
+
+    @if (type == ActionType.UpdateDevicesGpioState)
+    {
+        <td class="valign-middle">
+            @Html.HiddenFor(x => x.Id)
+            @Html.DropDownListFor(x => x.Gpio, parent.GpioTypes, new { @class = "form-control"})
+            @Html.ValidationMessageFor(x => x.Gpio)
+        </td>
+        <td class="valign-middle">
+            @Html.DropDownListFor(x => x.GpioState, parent.GpioStateTypes, new { @class = "form-control"})
+            @Html.ValidationMessageFor(x => x.GpioState)
+        </td>
+    }
+
+    <td class="text-right">
+        @Html.HiddenFor(x => x.Delete)
+        <button class="btn btn-secondary btn-sm delete-row ml-2"><i class="fa fa-times"></i> </button>
+    </td>
+</tr>

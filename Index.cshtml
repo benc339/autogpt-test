@@ -1,0 +1,89 @@
+﻿@using MvcGrid.AspNetCore.Web
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using IdSys.OneSheet.BusinessLogic.Constants
+@using IdSys.OneSheet.Web.Models.AutomaticRules
+
+@model IndexModel
+
+@{
+    ViewBag.Title = string.Format(@T.AutomaticRulesSearchTitle, Model.Customer.Name);
+    var mvcGrid = "AutomaticRulesGrid";
+}
+
+@await Html.PartialAsync("AdminBackNavigation", new AdminBackNavigationModel(Model.Customer))
+
+<a class="btn btn-success btn-sm float-right" asp-area="" asp-controller="AutomaticRules" asp-action="Edit" asp-route-customerId="@Model.CustomerId">
+    <i class="fas fa-plus"></i> @T.AutomaticRulesSearchAddAutomaticRule
+</a>
+
+<h4 class="mvc-title">@ViewBag.Title</h4>
+
+<div class="alert collapse" id="message"></div>
+
+<div class="card card-body bg-light pb-4 mb-2 mvc-filter">
+    <div class="row">
+        <div class="col-12">
+            <div class="title float-right"><i class="fas fa-filter"></i></div>
+            <div class="form-inline">
+                @Html.EditorFor(x => x.Status, "DropDownListString")
+                
+                <button type="button" class="btn btn-primary" data-mvcgrid-apply-filter="click"><i class="fas fa-search"></i> @T.FilterAction</button>
+                <button type="button" class="btn btn-secondary ml-1" data-mvcgrid-clear-filter="click">@T.Clear</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.MvcGrid(mvcGrid, new {Model.CustomerId })
+
+@section Scripts
+    {
+    <script type="text/javascript">
+
+        $(function () {
+
+            $(".confirm-delete").off("click").on("click",
+                function (e) {
+                    e.preventDefault();
+                    var sender = $(this);
+
+                    var message = $("#message");
+                    message.collapse("hide").removeClass("alert-danger").removeClass("alert-success");
+
+                    bootbox.confirm({
+                        message: '@T.AutomaticRuleDeleteConfirm',
+                        buttons: {
+                            confirm: {
+                                label: '@T.Yes',
+                                className: 'btn-primary'
+                            },
+                            cancel: {
+                                label: '@T.No',
+                                className: 'btn-secondary'
+                            }
+                        },
+                        callback: function (result) {
+
+                            if (result) {
+
+                                $.get(sender.attr("href"),
+                                    function (deleteResult) {
+
+                                        if (deleteResult.result) {
+                                            MVCGrid.setPage("@mvcGrid", MVCGrid.getPage("@mvcGrid"));
+                                            message.addClass("alert-success").html(deleteResult.message).collapse("show");
+                                            setTimeout(function () { message.collapse("hide") }, 10000);
+                                        }
+                                        else {
+                                            message.addClass("alert-danger").html(deleteResult.message).collapse("show");
+                                            setTimeout(function () { message.collapse("hide") }, 20000);
+                                        }
+                                    });
+                            }
+                        }
+                    });
+                });
+        });
+
+    </script>
+}

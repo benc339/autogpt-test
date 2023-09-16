@@ -1,0 +1,119 @@
+﻿@using IdSys.OneSheet.BusinessLogic.Enums
+@using IdSys.OneSheet.BusinessLogic.SyncManager
+@using IdSys.OneSheet.Web.Extensions
+@model IdSys.OneSheet.Web.Models.AutomaticRules.EditModel
+
+
+<h5 class="mt-4">
+    @T.AutomaticRuleActionsTitle:
+</h5>
+
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-light">
+            <p class="mb-0">
+                @T.AutomaticRuleFormatInfo
+
+                <ul class="pt-2">
+                    
+                    <li>
+                        
+                        @if (Model.AutomaticRuleActions.Any(x => x.Type == ActionType.UpdateDataRow))
+                        {
+                            <text>
+                                @T.Type '@(ActionType.UpdateDataRow.GetDescriptionValue())':
+                                <ul>
+                                    <li>{datetime_now} - Time the action is executed (format: dd.MM.yyyy HH:mm:ss)</li>
+                                    <li>{device_id} - Device id that started the automatic rule (eg. 100)</li>
+                                    <li>{device_name} - Device name that started the automatic rule (eg. Test Rfid reader) </li>
+                                    <li>{device_host} - Device host that started the automatic rule (eg. 172.16.7.1) </li>
+                                    <li>{device_port} - Device port that started the automatic rule (eg. 2000) </li>
+                                    <li>{device_type} - Device type that started the automatic rule (eg. ImpinjRfidReader) </li>
+                                    <li>{view_id} - Customer view id that started the automatic rule (eg. 100)</li>
+                                    <li>{view_name} - Customer view name that started the automatic rule (eg. Test Rfid reader) </li>
+                                    <li>{view_type} - Customer view type started the automatic rule (eg. RfidGuardGate) </li>
+                                    <li>{asset_field:####} - Asset field value, replace #### with field (@($"usable fields: {string.Join(", ", Enum.GetValues<OnlineFieldType>().Select(x => $"{x.ToString()}"))}")</li>
+                                    @if (Model.AutomaticRuleType == AutomaticActionRuleType.SelfServiceCheckInAndOut)
+                                    {
+                                        <li>{worker_name} - Name field from authenticated Worker entity</li>
+                                        <li>{worker_code} - Code field from authenticated Worker entity</li>
+                                    }
+                                </ul>
+                            </text>
+                        }
+                    </li>
+
+                </ul>
+            </p>
+        </div>
+    </div>
+</div>
+
+@for (var i = 0; i < Model.AutomaticRuleActions.Count; i++)
+{
+    var group = Model.AutomaticRuleActions[i];
+
+    <div class="row">
+        <div class="col-12 mt-3">
+
+            @Html.HiddenFor(x => x.AutomaticRuleActions[i].Type)
+            @Html.HiddenFor(x => x.AutomaticRuleActions[i].AddAction, new { @class = "add-action-field" })
+
+            <a href="#" class="btn btn-outline-info btn-sm float-right add-action" style="margin-left: 5px"><i class="fas fa-plus"></i> @T.AutomaticRuleActionsAdd</a>
+
+
+            <div class="pt-1">
+
+                <strong>
+                    @group.Type.GetDescriptionValue():
+                </strong>
+            </div>
+
+            @if (group.Actions.Any())
+            {
+                <table class="table table-striped mt-3">
+                    <thead>
+                        <tr>
+
+                            @if (group.Type == ActionType.UpdateDataRow)
+                            {
+                                <th class="col-2">
+                                    @T.AutomaticRuleActionsFiled
+                                </th>
+                                <th class="col-10">
+                                    @T.AutomaticRuleActionsFormat
+                                </th>
+                            }
+
+                            @if (group.Type == ActionType.UpdateDevicesGpioState)
+                            {
+                                <th class="col-6">
+                                    @T.AutomaticRuleActionsGpio
+                                </th>
+                                <th class="col-6">
+                                    @T.AutomaticRuleActionsGpioState
+                                </th>
+                            }
+
+                            <th style="width: 260px">
+                                &nbsp;
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var ii = 0; ii < group.Actions.Count; ii++)
+                        {
+                            @Html.EditorFor(x => x.AutomaticRuleActions[i].Actions[ii], new { parent = Model, type = group.Type })
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-light mt-3">
+                    @group.Type.GetDescriptionValue() @T.NotAppliedAddFilterRow
+                </div>
+            }
+        </div>
+    </div>
+}

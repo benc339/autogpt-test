@@ -1,0 +1,80 @@
+﻿@using IdSys.OneSheet.BusinessLogic
+@model IdSys.OneSheet.Web.Models.AutomaticRules.EditModel
+
+
+<h5 class="mt-4">
+    @T.AutomaticRuleFiltersTitle:
+</h5>
+
+<hr class="mt-0" />
+
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-light">
+            <p class="mb-0">
+                @T.AutomaticRuleFiltersInfo3
+                <ul>
+                    <li>@T.AutomaticRuleFiltersInfo4</li>
+                    <li>@T.AutomaticRuleFiltersInfo5</li>
+                </ul>
+            </p>
+            <p class="mb-1">
+                @T.AutomaticRuleFiltersInfo
+            </p>
+            <p class="mb-0">
+                @T.AutomaticRuleFiltersInfo2
+            </p>
+        </div>
+    </div>
+</div>
+
+@for (var i = 0; i < Model.AutomaticRuleFilters.Count; i++)
+{
+    var group = Model.AutomaticRuleFilters[i];
+
+    <div class="row">
+        <div class="col-12 mt-3">
+
+            @Html.HiddenFor(x => x.AutomaticRuleFilters[i].Type)
+            @Html.HiddenFor(x => x.AutomaticRuleFilters[i].AddFilter, new { @class = "add-filter-field" })
+
+            <a href="#" class="btn btn-outline-info btn-sm float-right add-filter" style="margin-left: 5px"><i class="fas fa-plus"></i> @T.AddFilter</a>
+
+
+            <div class="pt-1">
+
+                <strong>
+                    @group.Type.GetDescriptionValue():
+                </strong>
+            </div>
+
+            @if (group.Filters.Any())
+            {
+                <table class="table table-striped mt-3">
+                    <thead>
+                        <tr>
+                            <th>
+                                @T.SelectedFilters
+                            </th>
+                            <th style="width: 260px">
+                                &nbsp;
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var ii = 0; ii < group.Filters.Count; ii++)
+                        {
+                            @Html.EditorFor(x => x.AutomaticRuleFilters[i].Filters[ii], new { parent = Model, type = group.Type })
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-light mt-3">
+                    @group.Type.GetDescriptionValue() @T.NotAppliedAddFilterRow
+                </div>
+            }
+        </div>
+    </div>
+}

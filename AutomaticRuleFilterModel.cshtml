@@ -1,0 +1,69 @@
+﻿@using IdSys.OneSheet.BusinessLogic.Models
+@using Newtonsoft.Json.Linq
+@using IdSys.OneSheet.BusinessLogic
+@using IdSys.OneSheet.BusinessLogic.Enums
+@using IdSys.OneSheet.Web.Models.AutomaticRules
+@model IdSys.OneSheet.Web.Models.AutomaticRules.AutomaticRuleFilterModel
+
+@{
+    var parent = ViewData["parent"] as EditModel;
+    var type = (FilterType)ViewData["type"];
+}
+
+<tr>
+    <td class="valign-middle">
+        @Html.HiddenFor(x => x.Id)
+        @Html.HiddenFor(x => x.Filter, new { @class = "filter-field"})
+
+        @if (Model.Filter.IsNullOrWhiteSpace())
+        {
+            <div class="">
+                @T.AutomaticRuleNoFilter
+            </div>
+        }
+        else
+        {
+            var colNames = ViewData["Columns"] as Dictionary<string, string>;
+            var deliveryColumns = ViewData["DeliveryColumns"] as Dictionary<string, string>;
+
+            var obj = Model.Filter.ToJsonDynamic();
+            var filters = (JObject)obj;
+
+            @if (filters.Count > 0)
+            {
+                if (type == FilterType.DataRow)
+                {
+                    <div>
+                        @Html.Raw(new FilterParser(colNames, filters))
+                    </div>
+                }
+                else if (type == FilterType.Delivery)
+                {
+                    <div>
+                        @Html.Raw(new FilterParser(deliveryColumns, filters))
+                    </div>
+                }
+            }
+        }
+    </td>
+    <td class="text-right">
+
+        @if (type == FilterType.DataRow)
+        {
+            <a href="@Url.Action("RolesFilter", "Data", new { parent.CustomerId, Model.Filter })" class="btn btn-sm btn-outline-info filter-rows">
+                Koosta filter
+            </a>
+        }
+        else if (type == FilterType.Delivery)
+        {
+            <a href="@Url.Action("RolesFilter", "Deliveries", new { parent.CustomerId, Model.Filter })" class="btn btn-sm btn-outline-info filter-rows">
+                Koosta filter
+            </a>
+        }
+
+        @Html.HiddenFor(x => x.Delete)
+
+        <button class="btn btn-secondary btn-sm delete-row ml-2"><i class="fa fa-times"></i> </button>
+
+    </td>
+</tr>

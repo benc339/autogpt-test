@@ -1,0 +1,229 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using IdSys.OneSheet.Web.Extensions
+@using IdSys.OneSheet.BusinessLogic.Enums
+@using IdSys.OneSheet.BusinessLogic.Entities
+@using IdSys.OneSheet.Web.Models.AutomaticRules
+
+@model EditModel
+
+@{
+    ViewBag.Title = Model.Id > 0 ? string.Format(T.AutomaticRuleEditModifyTitle, Model.Customer.Name) : string.Format(T.AutomaticRuleNewTitle, Model.Customer.Name);
+
+    var type = (AutomaticActionRuleType?)Model.Type.SelectedValue;
+    var fields = type != null && AutomaticActionRule.AutomaticActionRuleTypeFields.ContainsKey(type.Value) ? AutomaticActionRule.AutomaticActionRuleTypeFields[type.Value] : new List<AutomaticActionRuleFieldType>();
+}
+
+<form asp-controller="AutomaticRules" asp-action="Edit" id="automaticRulesForm" autocomplete="off" data-ajax="true" data-ajax-method="POST" data-ajax-update="#automaticRulesForm" data-ajax-success="EditAutomaticRulesFormEvents" data-ajax-mode="replace-with">
+
+    @Html.HiddenFor(x => x.Id)
+    @Html.HiddenFor(x => x.CustomerId)
+    @Html.HiddenFor(x => x.SubAction)
+    @Html.HiddenFor(x => x.CurrentIndex)
+
+    @await Html.PartialAsync("AdminBackNavigation", new AdminBackNavigationModel(Model.Customer, ("AutomaticRules", T.AutomaticRules)))
+
+    <h4>@ViewBag.Title</h4>
+    <hr />
+
+    @Html.CustomValidationSummary()
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="row">
+                <div class="col-md-12">
+                    @Html.EditorFor(x => x.Name, "String")
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6" id="device-type">
+                    @Html.EditorFor(x => x.Type, "DropDownList")
+                </div>
+                @if (fields.Contains(AutomaticActionRuleFieldType.FilterOperator))
+                {
+                    <div class="col-md-3">
+                        @Html.EditorFor(x => x.Priority, "IntegerNull")
+                    </div>
+                    <div class="col-md-3">
+                        @Html.EditorFor(x => x.FilterOperator, "DropDownList")
+                    </div>
+                }
+                else
+                {
+                    <div class="col-md-6">
+                        @Html.EditorFor(x => x.Priority, "IntegerNull")
+                    </div>
+                }
+            </div>
+            <div class="row">
+                @if (fields.Contains(AutomaticActionRuleFieldType.TimeFilter))
+                {
+                    <div class="col-md-6">
+                        @Html.EditorFor(x => x.TimeFilterFormula, "String")
+                    </div>
+                }
+                @if (fields.Contains(AutomaticActionRuleFieldType.TimeCheck))
+                {
+                    <div class="col-md-6">
+                        @Html.EditorFor(x => x.CheckTime, "IntegerNull")
+                    </div>
+                }
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    @Html.EditorFor(x => x.Notes, "StringMultiline")
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <p>
+                <strong>@T.GeneralSettings2:</strong>
+            </p>
+            <div class="form-group">
+                @Html.EditorFor(x => x.Enabled, "BoolCheckboxText")
+            </div>
+            @if (fields.Contains(AutomaticActionRuleFieldType.AntennaFilter))
+            {
+                <p>
+                    <strong>@T.AutomaticActionRuleAntennaFilter.:</strong>
+                </p>
+                <div class="form-group">
+                    @Html.EditorFor(x => x.AntennaFilterEnabled, "BoolCheckboxText")
+                </div>
+                <div class="form-group pt-2">
+                    @Html.EditorFor(x => x.Antenna0Selected, "BoolCheckboxText")
+                </div>
+                <div class="form-group">
+                    @Html.EditorFor(x => x.Antenna1Selected, "BoolCheckboxText")
+                </div>
+                <div class="form-group">
+                    @Html.EditorFor(x => x.Antenna2Selected, "BoolCheckboxText")
+                </div>
+                <div class="form-group">
+                    @Html.EditorFor(x => x.Antenna3Selected, "BoolCheckboxText")
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (fields.Contains(AutomaticActionRuleFieldType.DataRowFilter))
+    {
+        <partial name="AutomaticRuleFilters" model="Model" />
+    }
+
+    @if (fields.Any(f => Model.ActionTypes.Contains(f)))
+    {
+        <partial name="AutomaticRuleActions" model="Model" />
+    }
+    
+    <partial name="SaveButton" model="new SaveButtonModel(Model.Id, T.AddAutomaticRule)" />
+</form>
+
+@section Scripts {
+
+    <script>
+
+        $(function () {
+
+            EditAutomaticRulesFormEvents();
+        });
+
+        function EditAutomaticRulesFormEvents() {
+
+            InitializeGlobal();
+
+            $("#device-type select").off("change").on("change", function (e) {
+                e.preventDefault();
+                PostForm("@AutomaticRuleSubActionType.TypeChange.ToString()");
+            });
+
+            $(".field-type-changed").off("change").on("change", function (e) {
+                e.preventDefault();
+                PostForm("@AutomaticRuleSubActionType.FieldTypeChange.ToString()");
+            });
+
+            $(".add-filter, .add-action").off("click").on("click",
+                function (e) {
+                    e.preventDefault();
+                    $(this).closest("div").find(".add-filter-field, .add-action-field").val(true);
+                    PostForm("@AutomaticRuleSubActionType.AddRow.ToString()");
+                });
+
+            $(".delete-row").off("click").on("click",
+                function (e) {
+                    e.preventDefault();
+
+                    var sender = $(this);
+
+                    bootbox.confirm({
+                        title: '@T.Confirmation"',
+                        message: '@T.ConfirmRowDelete',
+                        buttons: {
+                            confirm: {
+                                label: '@T.Yes',
+                                className: 'btn-primary'
+                            },
+                            cancel: {
+                                label: '@T.No',
+                                className: 'btn-secondary'
+                            }
+                        },
+                        callback: function (result) {
+                            if (result) {
+                                sender.closest("td").find("input").val("true");
+                                PostForm("@AutomaticRuleSubActionType.RemoveRow.ToString()");
+                            }
+                        }
+                    });
+                });
+
+            $(".filter-rows").off("click").on("click",
+                function (e) {
+                    e.preventDefault();
+
+                    var sender = $(this);
+
+                    $.get($(this).attr("href"),
+                        function (responseHtml) {
+
+                            bootbox.confirm({
+                                title: '@T.MakeRowsFilter',
+                                message: responseHtml,
+                                size: 'large',
+                                buttons: {
+                                    confirm: {
+                                        label: '@T.Done',
+                                        className: 'btn-primary'
+                                    },
+                                    cancel: {
+                                        label: '@T.Cancel',
+                                        className: 'btn-secondary'
+                                    }
+                                },
+                                callback: function (result) {
+                                    if (result) {
+                                        sender.closest("tr").find(".filter-field").val($("#rowFilter").contents().find("#downloadFile #popupFilter").val());
+                                        log(sender);
+                                        $("#UpdateView").val("True");
+                                        PostForm("@AutomaticRuleSubActionType.Update.ToString()");
+                                    }
+                                }
+                            });
+                        }
+                    );
+                });
+
+        }
+
+        function PostForm(action) {
+
+            if (action !== null) {
+                $("#SubAction").val(action);
+            } else {
+                $("#SubAction").val("@AutomaticRuleSubActionType.None.ToString()");
+            }
+
+            $("#automaticRulesForm").validate().settings.ignore = "*";
+            $("#automaticRulesForm").submit();
+        }
+    </script>
+}
